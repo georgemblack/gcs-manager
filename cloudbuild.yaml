@@ -1,0 +1,29 @@
+steps:
+      - name: 'gcr.io/cloud-builders/docker'
+        args: [ 'build', '-t', 'us-east1-docker.pkg.dev/$PROJECT_ID/private/gcs-manager:$COMMIT_SHA', '.' ]
+      - name: 'gcr.io/cloud-builders/docker'
+        args: ['push', 'us-east1-docker.pkg.dev/$PROJECT_ID/private/gcs-manager:$COMMIT_SHA']
+      - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+        entrypoint: gcloud
+        args:
+        - 'run'
+        - 'deploy'
+        - 'gcs-manager'
+        - '--image'
+        - 'us-east1-docker.pkg.dev/$PROJECT_ID/private/gcs-manager:$COMMIT_SHA'
+        - '--region'
+        - 'us-east1'
+        - '--concurrency'
+        - '25'
+        - '--cpu'
+        - '2'
+        - '--max-instances'
+        - '5'
+        - '--memory'
+        - '128Mi'
+        - '--platform'
+        - 'managed'
+        - '--service-account'
+        - 'gcs-manager-service@oceanblue.iam.gserviceaccount.com'
+    images:
+      - 'us-east1-docker.pkg.dev/$PROJECT_ID/private/gcs-manager:$COMMIT_SHA'
