@@ -47,6 +47,7 @@ MIME_TYPES_MAP = {
     "zip": "application/zip",
 }
 
+
 @app.route("/", methods=["POST"])
 def index():
     envelope = request.get_json()
@@ -124,6 +125,7 @@ def get_cache_control(object_name):
     cache_control = f"public, max-age={seconds}"
     print(f"Calculated cache-control: {cache_control}")
     return cache_control
+
 
 def get_content_type(object_name):
     extension = object_name.split(".").pop()
