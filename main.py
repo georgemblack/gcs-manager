@@ -71,7 +71,7 @@ def index():
 
     event_type = message["attributes"]["eventType"]
     if event_type != "OBJECT_FINALIZE":
-        print(f"Ignoring unrelated Cloud Storage event: {event_type}")
+        print(f"Ignoring unrelated Cloud Storage event type: {event_type}")
         return "No action taken", 200
 
     try:
