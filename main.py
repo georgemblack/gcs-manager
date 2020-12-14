@@ -6,6 +6,46 @@ from google.cloud import storage
 
 app = Flask(__name__)
 
+MIME_TYPES_MAP = {
+    "aac": "audio/aac",
+    "arc": "application/x-freearc",
+    "avi": "video/x-msvideo",
+    "css": "text/css",
+    "csv": "text/csv",
+    "doc": "application/msword",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "gz": "application/gzip",
+    "gpx": "application/gpx+xml",
+    "gif": "image/gif",
+    "html": "text/html",
+    "ico": "image/vnd.microsoft.icon",
+    "ics": "text/calendar",
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpeg",
+    "js": "text/javascript",
+    "json": "application/json",
+    "mid": "audio/x-midi",
+    "midi": "audio/x-midi",
+    "mpeg": "video/mpeg",
+    "png": "image/png",
+    "pdf": "application/pdf",
+    "rar": "application/vnd.rar",
+    "rtf": "application/rtf",
+    "sh": "application/x-sh",
+    "svg": "image/svg+xml",
+    "tar": "application/x-tar",
+    "tif": "image/tiff",
+    "tiff": "image/tiff",
+    "txt": "text/plain",
+    "usdz": "model/usd",
+    "wav": "audio/wav",
+    "weba": "audio/webm",
+    "webm": "video/webm",
+    "webp": "image/webp",
+    "xhtml": "application/xhtml+xml",
+    "xml": "application/xml",
+    "zip": "application/zip",
+}
 
 @app.route("/", methods=["POST"])
 def index():
@@ -58,32 +98,35 @@ def update_object_metadata(data):
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(data["bucket"])
     blob = bucket.get_blob(data["name"])
-    cache_control = get_cache_control(data["name"])
 
-    if isinstance(blob.cache_control, str) and blob.cache_control == cache_control:
-        print(f"Object has correct cache-control: {data['name']}")
-        return
+    content_type = get_content_type(data["name"])
+    cache_control = get_cache_control(data["name"])
 
     if not blob.exists():
         print(f"Object does not exist: {data['name']}")
         return
 
+    blob.content_type = content_type
     blob.cache_control = cache_control
     blob.patch()
     print(f"Successfully updated object: {data['name']}")
 
 
 def get_cache_control(object_name):
-    seconds = "3600"
+    seconds = "2592000"
     extension = object_name.split(".").pop()
 
-    if extension in ["jpg", "jpeg", "png", "webp", "mov", "ico", "svg", "webmanifest"]:
-        seconds = "2592000"  # 30 days
-    elif extension in ["js", "css"]:
-        seconds = "172800"  # 2 days
-    elif extension in ["xml", "json"]:
+    if extension in ["html", "xml", "json", "txt"]:
         seconds = "900"
+    elif extension in ["js", "css"]:
+        seconds = "172800"
 
     cache_control = f"public, max-age={seconds}"
     print(f"Calculated cache-control: {cache_control}")
     return cache_control
+
+def get_content_type(object_name):
+    extension = object_name.split(".").pop()
+    if extension in MIME_TYPES_MAP.keys():
+        return MIME_TYPES_MAP[extension]
+    return "application/octet-stream"
