@@ -4,7 +4,7 @@ import base64
 from flask import Flask, request
 from google.cloud import storage
 
-app = Flask(__name__)
+SOURCE_BUCKETS = ["george.black", "media.george.black"]
 
 MIME_TYPES_MAP = {
     "aac": "audio/aac",
@@ -48,6 +48,8 @@ MIME_TYPES_MAP = {
     "zip": "application/zip",
 }
 
+app = Flask(__name__)
+
 
 @app.route("/", methods=["POST"])
 def index():
@@ -84,6 +86,10 @@ def index():
     if not data["name"] or not data["bucket"]:
         print(f"Error: Expected name/bucket in notification")
         return f"Bad Request: Expected name/bucket in notification", 400
+
+    if data["bucket"] not in SOURCE_BUCKETS:
+        print(f"Ignoring event from bucket {data['bucket']}")
+        return ("", 200)
 
     try:
         update_object_metadata(data)
@@ -124,6 +130,7 @@ def get_cache_control(object_name):
         seconds = "172800"
 
     return f"public, max-age={seconds}"
+
 
 def get_content_type(object_name):
     extension = object_name.split(".").pop()
